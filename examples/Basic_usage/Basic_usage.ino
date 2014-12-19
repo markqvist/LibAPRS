@@ -1,3 +1,17 @@
+// You must define what reference voltage the ADC
+// of your device is running at. If you bought a
+// MicroModem from unsigned.io, it will be running
+// at 3.3v if the "hw rev" is greater than 2.0.
+// This is the most common. If you build your own
+// modem, you should know this value yourself :)
+#define ADC_REFERENCE REF_3V3
+// OR
+//#define ADC_REFERENCE REF_5V
+
+// You can also define whether your modem will be
+// running with an open squelch radio:
+#define OPEN_SQUELCH false
+
 // Include LibAPRS
 #include <LibAPRS.h>
 
