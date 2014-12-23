@@ -150,9 +150,8 @@ void processPacket() {
 
 boolean whichExample = false;
 void loop() {
-  delay(2000);
-
-  processPacket();
+  
+  delay(1000);
   if (whichExample) {
     locationUpdateExample();
   } else {
@@ -160,4 +159,6 @@ void loop() {
   }
   whichExample ^= true;
 
+  delay(500);
+  processPacket();
 }
