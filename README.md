@@ -18,3 +18,7 @@ See the example included in the library for info on how to use it!
 - Support for settings APRS symbols
 - Support for power/height/gain info in location updates
 - Can run with open squelch
+
+## Installation
+
+Place the "LibAPRS" folder (the one in the same folder as this readme file) inside your Arduino "libraries" folder. That's all!

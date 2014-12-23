@@ -58,7 +58,6 @@ void APRS_poll(void) {
 }
 
 void APRS_setCallsign(char *call, int ssid) {
-    Serial.println("Setting to: ");
     memset(CALL, 0, 7);
     int i = 0;
     while (i < 6 && call[i] != 0) {
@@ -171,23 +170,22 @@ void APRS_setDirectivity(int s) {
 }
 
 void APRS_printSettings() {
-    Serial.println("LibAPRS Settings:");
-    Serial.print("Callsign:     "); Serial.print(CALL); Serial.print("-"); Serial.println(CALL_SSID);
-    Serial.print("Destination:  "); Serial.print(DST); Serial.print("-"); Serial.println(DST_SSID);
-    Serial.print("Path1:        "); Serial.print(PATH1); Serial.print("-"); Serial.println(PATH1_SSID);
-    Serial.print("Path2:        "); Serial.print(PATH2); Serial.print("-"); Serial.println(PATH2_SSID);
-    Serial.print("Message dst:  "); if (message_recip[0] == 0) { Serial.println("N/A"); } else { Serial.print(message_recip); Serial.print("-"); Serial.println(message_recip_ssid); }
-    Serial.print("TX Preamble:  "); Serial.println(custom_preamble);
-    Serial.print("TX Tail:      "); Serial.println(custom_tail);
-    Serial.print("Symbol table: "); if (symbolTable = '/') { Serial.println("Normal"); } else { Serial.println("Alternate"); }
-    Serial.print("Symbol:       "); Serial.println(symbol);
-    Serial.print("Power:        "); if (power < 10) { Serial.println(power); } else { Serial.println("N/A"); }
-    Serial.print("Height:       "); if (height < 10) { Serial.println(height); } else { Serial.println("N/A"); }
-    Serial.print("Gain:         "); if (gain < 10) { Serial.println(gain); } else { Serial.println("N/A"); }
-    Serial.print("Directivity:  "); if (directivity < 10) { Serial.println(directivity); } else { Serial.println("N/A"); }
-    Serial.print("Latitude:     "); if (latitude[0] != 0) { Serial.println(latitude); } else { Serial.println("N/A"); }
-    Serial.print("Longtitude:   "); if (longtitude[0] != 0) { Serial.println(longtitude); } else { Serial.println("N/A"); }
-
+    Serial.println(F("LibAPRS Settings:"));
+    Serial.print(F("Callsign:     ")); Serial.print(CALL); Serial.print(F("-")); Serial.println(CALL_SSID);
+    Serial.print(F("Destination:  ")); Serial.print(DST); Serial.print(F("-")); Serial.println(DST_SSID);
+    Serial.print(F("Path1:        ")); Serial.print(PATH1); Serial.print(F("-")); Serial.println(PATH1_SSID);
+    Serial.print(F("Path2:        ")); Serial.print(PATH2); Serial.print(F("-")); Serial.println(PATH2_SSID);
+    Serial.print(F("Message dst:  ")); if (message_recip[0] == 0) { Serial.println(F("N/A")); } else { Serial.print(message_recip); Serial.print(F("-")); Serial.println(message_recip_ssid); }
+    Serial.print(F("TX Preamble:  ")); Serial.println(custom_preamble);
+    Serial.print(F("TX Tail:      ")); Serial.println(custom_tail);
+    Serial.print(F("Symbol table: ")); if (symbolTable = '/') { Serial.println(F("Normal")); } else { Serial.println(F("Alternate")); }
+    Serial.print(F("Symbol:       ")); Serial.println(symbol);
+    Serial.print(F("Power:        ")); if (power < 10) { Serial.println(power); } else { Serial.println(F("N/A")); }
+    Serial.print(F("Height:       ")); if (height < 10) { Serial.println(height); } else { Serial.println(F("N/A")); }
+    Serial.print(F("Gain:         ")); if (gain < 10) { Serial.println(gain); } else { Serial.println(F("N/A")); }
+    Serial.print(F("Directivity:  ")); if (directivity < 10) { Serial.println(directivity); } else { Serial.println(F("N/A")); }
+    Serial.print(F("Latitude:     ")); if (latitude[0] != 0) { Serial.println(latitude); } else { Serial.println(F("N/A")); }
+    Serial.print(F("Longtitude:   ")); if (longtitude[0] != 0) { Serial.println(longtitude); } else { Serial.println(F("N/A")); }
 }
 
 void APRS_sendPkt(void *_buffer, size_t length) {
@@ -214,6 +212,7 @@ void APRS_sendPkt(void *_buffer, size_t length) {
     ax25_sendVia(&AX25, path, countof(path), buffer, length);
 }
 
+// Dynamic RAM usage of this function is 30 bytes
 void APRS_sendLoc(void *_buffer, size_t length) {
     size_t payloadLength = 20+length;
     bool usePHG = false;
@@ -250,6 +249,7 @@ void APRS_sendLoc(void *_buffer, size_t length) {
     free(packet);
 }
 
+// Dynamic RAM usage of this function is 18 bytes
 void APRS_sendMsg(void *_buffer, size_t length) {
     if (length > 67) length = 67;
     size_t payloadLength = 11+length+4;
@@ -299,11 +299,44 @@ void APRS_sendMsg(void *_buffer, size_t length) {
     packet[14+length] = n+48;
     
     APRS_sendPkt(packet, payloadLength);
-
     free(packet);
 }
 
 void APRS_msgRetry() {
     message_seq--;
     APRS_sendMsg(lastMessage, lastMessageLen);
+}
+
+// For getting free memory, from:
+// http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1213583720/15
+
+extern unsigned int __heap_start;
+extern void *__brkval;
+
+struct __freelist {
+  size_t sz;
+  struct __freelist *nx;
+};
+
+extern struct __freelist *__flp;
+
+int freeListSize() {
+  struct __freelist* current;
+  int total = 0;
+  for (current = __flp; current; current = current->nx) {
+    total += 2; /* Add two bytes for the memory block's header  */
+    total += (int) current->sz;
+  }
+  return total;
+}
+
+int freeMemory() {
+  int free_memory;
+  if ((int)__brkval == 0) {
+    free_memory = ((int)&free_memory) - ((int)&__heap_start);
+  } else {
+    free_memory = ((int)&free_memory) - ((int)__brkval);
+    free_memory += freeListSize();
+  }
+  return free_memory;
 }

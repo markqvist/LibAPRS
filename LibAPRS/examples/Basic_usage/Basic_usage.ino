@@ -18,15 +18,46 @@
 // You always need to include this function. It will
 // get called by the library every time a packet is
 // received, so you can process incoming packets.
+// 
+// IMPORTANT! This function is called from within an
+// interrupt. That means that you should only do things
+// here that are FAST. Don't print out info directly
+// from this function, instead set a flag and print it
+// from your main loop, like this:
+
+boolean gotPacket = false;
+AX25Msg incomingPacket;
+uint8_t *packetData;
 void aprs_msg_callback(struct AX25Msg *msg) {
-  Serial.print("Received APRS packet. Data: ");
-  for (int i = 0; i < msg->len; i++) { Serial.write(msg->info[i]); }
-  Serial.println("");
+  // If we already have a packet waiting to be
+  // processed, we must drop the new one.
+  if (!gotPacket) {
+    // Set flag to indicate we got a packet
+    gotPacket = true;
+
+    // The memory referenced as *msg is volatile
+    // and we need to copy all the data to a
+    // local variable for later processing.
+    memcpy(&incomingPacket, msg, sizeof(AX25Msg));
+
+    // We need to allocate a new buffer for the
+    // data payload of the packet. First we check
+    // if there is enough free RAM.
+    if (freeMemory() > msg->len) {
+      packetData = (uint8_t*)malloc(msg->len);
+      memcpy(packetData, msg->info, msg->len);
+      incomingPacket.info = packetData;
+    } else {
+      // We did not have enough free RAM to receive
+      // this packet, so we drop it.
+      gotPacket = false;
+    }
+  }
 }
 
 void setup() {
   // Set up serial port
-  Serial.begin(9600);
+  Serial.begin(115200);
   
   // Initialise APRS library - This starts the modem
   APRS_init();
@@ -36,25 +67,26 @@ void setup() {
   
   // You don't need to set the destination identifier, but
   // if you want to, this is how you do it:
-  APRS_setDestination("APZMDM", 0);
+  // APRS_setDestination("APZMDM", 0);
   
   // Path parameters are set to sensible values by
   // default, but this is how you can configure them:
-  APRS_setPath1("WIDE1", 1);
-  APRS_setPath2("WIDE2", 2);
+  // APRS_setPath1("WIDE1", 1);
+  // APRS_setPath2("WIDE2", 2);
   
   // You can define preamble and tail like this:
-  APRS_setPreamble(350);
-  APRS_setTail(50);
+  // APRS_setPreamble(350);
+  // APRS_setTail(50);
   
   // You can use the normal or alternate symbol table:
-  APRS_useAlternateSymbolTable(false);
+  // APRS_useAlternateSymbolTable(false);
   
   // And set what symbol you want to use:
-  APRS_setSymbol('n');
+  // APRS_setSymbol('n');
   
   // We can print out all the settings
   APRS_printSettings();
+  Serial.print(F("Free RAM:     ")); Serial.println(freeMemory());
 }
 
 void locationUpdateExample() {
@@ -79,7 +111,7 @@ void locationUpdateExample() {
   char *comment = "LibAPRS location update";
     
   // And send the update
-  APRS_sendLoc(comment, sizeof(comment));
+  APRS_sendLoc(comment, strlen(comment));
   
 }
 
@@ -88,19 +120,44 @@ void messageExample() {
   APRS_setMessageDestination("AA3BBB", 0);
   
   // And define a string to send
-  char *message = "Hi there! This is a message";
-  APRS_sendMsg(message, sizeof(message));
+  char *message = "Hi there! This is a message.";
+  APRS_sendMsg(message, strlen(message));
   
 }
 
+// Here's a function to process incoming packets
+// Remember to call this function often, so you
+// won't miss any packets due to one already
+// waiting to be processed
+void processPacket() {
+  if (gotPacket) {
+    gotPacket = false;
+    Serial.print(F("Received APRS packet. Data: "));
+    for (int i = 0; i < incomingPacket.len; i++) {
+      Serial.write(incomingPacket.info[i]);
+    }
+    Serial.println("");
+
+    // Remeber to free memory for our buffer!
+    free(packetData);
+
+    // You can print out the amount of free
+    // RAM to check you don't have any memory
+    // leaks
+    // Serial.print(F("Free RAM: ")); Serial.println(freeMemory());
+  }
+}
+
+boolean whichExample = false;
 void loop() {
   delay(2000);
-  locationUpdateExample();
-  
-  delay(2000);
-  messageExample();
 
-  // Just for fun we print out the settings
-  APRS_printSettings();
+  processPacket();
+  if (whichExample) {
+    locationUpdateExample();
+  } else {
+    messageExample();
+  }
+  whichExample ^= true;
 
 }

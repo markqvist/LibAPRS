@@ -1,5 +1,6 @@
 #include <string.h>
 #include "AFSK.h"
+#include "Arduino.h"
 
 extern unsigned long custom_preamble;
 extern unsigned long custom_tail;
@@ -465,7 +466,7 @@ ISR(ADC_vect) {
     }
 
     poll_timer++;
-    if (poll_timer > 4) {
+    if (poll_timer > 3) {
         poll_timer = 0;
         APRS_poll();
     }
