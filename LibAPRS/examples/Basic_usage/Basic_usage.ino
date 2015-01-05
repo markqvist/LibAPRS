@@ -1,3 +1,6 @@
+// Include LibAPRS
+#include <LibAPRS.h>
+
 // You must define what reference voltage the ADC
 // of your device is running at. If you bought a
 // MicroModem from unsigned.io, it will be running
@@ -11,9 +14,6 @@
 // You can also define whether your modem will be
 // running with an open squelch radio:
 #define OPEN_SQUELCH false
-
-// Include LibAPRS
-#include <LibAPRS.h>
 
 // You always need to include this function. It will
 // get called by the library every time a packet is
@@ -60,7 +60,7 @@ void setup() {
   Serial.begin(115200);
   
   // Initialise APRS library - This starts the modem
-  APRS_init();
+  APRS_init(ADC_REFERENCE, OPEN_SQUELCH);
   
   // You must at a minimum configure your callsign and SSID
   APRS_setCallsign("NOCALL", 1);
@@ -132,7 +132,17 @@ void messageExample() {
 void processPacket() {
   if (gotPacket) {
     gotPacket = false;
-    Serial.print(F("Received APRS packet. Data: "));
+    
+    Serial.print(F("Received APRS packet. SRC: "));
+    Serial.print(incomingPacket.src.call);
+    Serial.print(F("-"));
+    Serial.print(incomingPacket.src.ssid);
+    Serial.print(F(". DST: "));
+    Serial.print(incomingPacket.dst.call);
+    Serial.print(F("-"));
+    Serial.print(incomingPacket.dst.ssid);
+    Serial.print(F(". Data: "));
+
     for (int i = 0; i < incomingPacket.len; i++) {
       Serial.write(incomingPacket.info[i]);
     }

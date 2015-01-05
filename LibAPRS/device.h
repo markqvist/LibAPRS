@@ -16,17 +16,6 @@
     #define FREQUENCY_CORRECTION 0
 #endif
 
-// ADC settings
-#ifndef OPEN_SQUELCH
-    #define OPEN_SQUELCH false
-#endif
-
-#ifndef ADC_REFERENCE
-    #define ADC_REFERENCE REF_3V3
-    // OR
-    //#define ADC_REFERENCE REF_5V
-#endif
-
 // Sampling & timer setup
 #define CONFIG_AFSK_DAC_SAMPLERATE 9600
 

@@ -39,7 +39,7 @@ typedef struct AX25Ctx {
 #define AX25_REPEATED(msg, n) ((msg)->rpt_flags & BV(n))
 
 typedef struct AX25Call {
-    char call[6];
+    char call[7];
     uint8_t ssid;
 } AX25Call;
 

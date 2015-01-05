@@ -4,6 +4,8 @@
 
 extern unsigned long custom_preamble;
 extern unsigned long custom_tail;
+extern int LibAPRS_vref;
+extern bool LibAPRS_open_squelch;
 
 bool hw_afsk_dac_isr = false;
 bool hw_5v_ref = false;
@@ -16,11 +18,11 @@ void afsk_putchar(char c);
 
 void AFSK_hw_refDetect(void) {
     // This is manual for now
-    #if ADC_REFERENCE == REF_5V
+    if (LibAPRS_vref == REF_5V) {
         hw_5v_ref = true;
-    #else
+    } else {
         hw_5v_ref = false;
-    #endif
+    }
 }
 
 void AFSK_hw_init(void) {
@@ -198,9 +200,9 @@ static bool hdlcParse(Hdlc *hdlc, bool bit, FIFOBuffer *fifo) {
             // on the RX LED.
             fifo_push(fifo, HDLC_FLAG);
             hdlc->receiving = true;
-            #if OPEN_SQUELCH == false
+            if(!LibAPRS_open_squelch) {
                 LED_RX_ON();
-            #endif
+            }
         } else {
             // If the buffer is full, we have a problem
             // and abort by setting the return value to     

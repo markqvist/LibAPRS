@@ -10,8 +10,11 @@
 
 #define countof(a) sizeof(a)/sizeof(a[0])
 #define MIN(a,b) ({ typeof(a) _a = (a); typeof(b) _b = (b); ((typeof(_a))((_a < _b) ? _a : _b)); })
-#define DECODE_CALL(buf, addr) for (unsigned i = 0; i < sizeof((addr)); i++) { char c = (*(buf)++ >> 1); (addr)[i] = (c == ' ') ? '\x0' : c; }
+#define DECODE_CALL(buf, addr) for (unsigned i = 0; i < sizeof((addr))-1; i++) { char c = (*(buf)++ >> 1); (addr)[i] = (c == ' ') ? '\x0' : c; }
 #define AX25_SET_REPEATED(msg, idx, val) do { if (val) { (msg)->rpt_flags |= _BV(idx); } else { (msg)->rpt_flags &= ~_BV(idx) ; } } while(0)
+
+extern int LibAPRS_vref;
+extern bool LibAPRS_open_squelch;
 
 void ax25_init(AX25Ctx *ctx, ax25_callback_t hook) {
     memset(ctx, 0, sizeof(*ctx));
@@ -25,9 +28,11 @@ static void ax25_decode(AX25Ctx *ctx) {
 
     DECODE_CALL(buf, msg.dst.call);
     msg.dst.ssid = (*buf++ >> 1) & 0x0F;
+    msg.dst.call[6] = 0;
 
     DECODE_CALL(buf, msg.src.call);
     msg.src.ssid = (*buf >> 1) & 0x0F;
+    msg.src.call[6] = 0;
 
     for (msg.rpt_count = 0; !(*buf++ & 0x01) && (msg.rpt_count < countof(msg.rpt_list)); msg.rpt_count++) {
         DECODE_CALL(buf, msg.rpt_list[msg.rpt_count].call);
@@ -55,9 +60,9 @@ void ax25_poll(AX25Ctx *ctx) {
         if (!ctx->escape && c == HDLC_FLAG) {
             if (ctx->frame_len >= AX25_MIN_FRAME_LEN) {
                 if (ctx->crc_in == AX25_CRC_CORRECT) {
-                    #if OPEN_SQUELCH == true
+                    if(LibAPRS_open_squelch) {
                         LED_RX_ON();
-                    #endif
+                    }
                     ax25_decode(ctx);
                 }
             }
