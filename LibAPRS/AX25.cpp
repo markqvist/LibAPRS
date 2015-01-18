@@ -49,7 +49,11 @@ static void ax25_decode(AX25Ctx *ctx) {
     msg.len = ctx->frame_len - 2 - (buf - ctx->buf);
     msg.info = buf;
 
-    if (ctx->hook) ctx->hook(&msg);        
+    if (ctx->hook) {
+        cli();
+        ctx->hook(&msg);
+        sei();
+    }   
 
 }
 

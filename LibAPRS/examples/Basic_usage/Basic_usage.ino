@@ -18,6 +18,9 @@
 // You always need to include this function. It will
 // get called by the library every time a packet is
 // received, so you can process incoming packets.
+//
+// If you are only interested in receiving, you should
+// just leave this function empty.
 // 
 // IMPORTANT! This function is called from within an
 // interrupt. That means that you should only do things
