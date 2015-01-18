@@ -10,7 +10,7 @@
 
 #define countof(a) sizeof(a)/sizeof(a[0])
 #define MIN(a,b) ({ typeof(a) _a = (a); typeof(b) _b = (b); ((typeof(_a))((_a < _b) ? _a : _b)); })
-#define DECODE_CALL(buf, addr) for (unsigned i = 0; i < sizeof((addr))-1; i++) { char c = (*(buf)++ >> 1); (addr)[i] = (c == ' ') ? '\x0' : c; }
+#define DECODE_CALL(buf, addr) for (unsigned i = 0; i < sizeof((addr))-CALL_OVERSPACE; i++) { char c = (*(buf)++ >> 1); (addr)[i] = (c == ' ') ? '\x0' : c; }
 #define AX25_SET_REPEATED(msg, idx, val) do { if (val) { (msg)->rpt_flags |= _BV(idx); } else { (msg)->rpt_flags &= ~_BV(idx) ; } } while(0)
 
 extern int LibAPRS_vref;
@@ -116,7 +116,7 @@ void ax25_sendRaw(AX25Ctx *ctx, void *_buf, size_t len) {
 }
 
 static void ax25_sendCall(AX25Ctx *ctx, const AX25Call *addr, bool last){
-    unsigned len = MIN(sizeof(addr->call-1), strlen(addr->call));
+    unsigned len = MIN((sizeof(addr->call) - CALL_OVERSPACE), strlen(addr->call));
 
     for (unsigned i = 0; i < len; i++) {
         uint8_t c = addr->call[i];
@@ -124,8 +124,8 @@ static void ax25_sendCall(AX25Ctx *ctx, const AX25Call *addr, bool last){
         ax25_putchar(ctx, c << 1);
     }
 
-    if (len < sizeof(addr->call-1)) {
-        for (unsigned i = 0; i < sizeof(addr->call-1) - len; i++) {
+    if (len < (sizeof(addr->call) - CALL_OVERSPACE)) {
+        for (unsigned i = 0; i < (sizeof(addr->call) - CALL_OVERSPACE) - len; i++) {
             ax25_putchar(ctx, ' ' << 1);
         }
     }

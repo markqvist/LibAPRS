@@ -38,8 +38,11 @@ typedef struct AX25Ctx {
 #define AX25_MAX_RPT 8
 #define AX25_REPEATED(msg, n) ((msg)->rpt_flags & BV(n))
 
+#define CALL_OVERSPACE 1
+
 typedef struct AX25Call {
-    char call[7];
+    char call[6+CALL_OVERSPACE];
+    //char STRING_TERMINATION = 0;
     uint8_t ssid;
 } AX25Call;
 
