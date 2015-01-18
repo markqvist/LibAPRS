@@ -116,7 +116,7 @@ void ax25_sendRaw(AX25Ctx *ctx, void *_buf, size_t len) {
 }
 
 static void ax25_sendCall(AX25Ctx *ctx, const AX25Call *addr, bool last){
-    unsigned len = MIN(sizeof(addr->call), strlen(addr->call));
+    unsigned len = MIN(sizeof(addr->call-1), strlen(addr->call));
 
     for (unsigned i = 0; i < len; i++) {
         uint8_t c = addr->call[i];
@@ -124,8 +124,8 @@ static void ax25_sendCall(AX25Ctx *ctx, const AX25Call *addr, bool last){
         ax25_putchar(ctx, c << 1);
     }
 
-    if (len < sizeof(addr->call)) {
-        for (unsigned i = 0; i < sizeof(addr->call) - len; i++) {
+    if (len < sizeof(addr->call-1)) {
+        for (unsigned i = 0; i < sizeof(addr->call-1) - len; i++) {
             ax25_putchar(ctx, ' ' << 1);
         }
     }
