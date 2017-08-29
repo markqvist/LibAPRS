@@ -184,7 +184,7 @@ void APRS_printSettings() {
     Serial.print(F("Message dst:  ")); if (message_recip[0] == 0) { Serial.println(F("N/A")); } else { Serial.print(message_recip); Serial.print(F("-")); Serial.println(message_recip_ssid); }
     Serial.print(F("TX Preamble:  ")); Serial.println(custom_preamble);
     Serial.print(F("TX Tail:      ")); Serial.println(custom_tail);
-    Serial.print(F("Symbol table: ")); if (symbolTable = '/') { Serial.println(F("Normal")); } else { Serial.println(F("Alternate")); }
+    Serial.print(F("Symbol table: ")); if (symbolTable == '/') { Serial.println(F("Normal")); } else { Serial.println(F("Alternate")); }
     Serial.print(F("Symbol:       ")); Serial.println(symbol);
     Serial.print(F("Power:        ")); if (power < 10) { Serial.println(power); } else { Serial.println(F("N/A")); }
     Serial.print(F("Height:       ")); if (height < 10) { Serial.println(height); } else { Serial.println(F("N/A")); }
