@@ -18,14 +18,17 @@ AX25Call dst;
 AX25Call path1;
 AX25Call path2;
 
-char CALL[7] = "NOCALL";
-int CALL_SSID = 0;
-char DST[7] = "APZMDM";
-int DST_SSID = 0;
-char PATH1[7] = "WIDE1";
-int PATH1_SSID = 1;
-char PATH2[7] = "WIDE2";
-int PATH2_SSID = 2;
+#define MAX_CALL_LENGTH 6
+char CALL[MAX_CALL_LENGTH] = "NOCALL";
+int8_t CALL_SSID = 0;
+char DST[MAX_CALL_LENGTH] = "APZMDM";
+int8_t DST_SSID = 0;
+char PATH1[MAX_CALL_LENGTH] = "WIDE1";
+int8_t PATH1_SSID = 1;
+char PATH2[MAX_CALL_LENGTH] = "WIDE2";
+int8_t PATH2_SSID = 2;
+uint8_t MICE_MSG;
+uint8_t MICE_SSID;
 
 AX25Call path[4];
 
@@ -39,11 +42,13 @@ uint8_t power = 10;
 uint8_t height = 10;
 uint8_t gain = 10;
 uint8_t directivity = 10;
+uint16_t speed;
+uint16_t course;
 /////////////////////////
 
 // Message packet assembly fields
-char message_recip[7];
-int message_recip_ssid = -1;
+char message_recip[6];
+int8_t message_recip_ssid = -1;
 
 int message_seq = 0;
 char lastMessage[67];
@@ -63,8 +68,8 @@ void APRS_poll(void) {
     ax25_poll(&AX25);
 }
 
-void APRS_setCallsign(char *call, int ssid) {
-    memset(CALL, 0, 7);
+void APRS_setCallsign(char *call, int8_t ssid) {
+    memset(CALL, 0, MAX_CALL_LENGTH);
     int i = 0;
     while (i < 6 && call[i] != 0) {
         CALL[i] = call[i];
@@ -73,8 +78,8 @@ void APRS_setCallsign(char *call, int ssid) {
     CALL_SSID = ssid;
 }
 
-void APRS_setDestination(char *call, int ssid) {
-    memset(DST, 0, 7);
+void APRS_setDestination(char *call, int8_t ssid) {
+    memset(DST, 0, MAX_CALL_LENGTH);
     int i = 0;
     while (i < 6 && call[i] != 0) {
         DST[i] = call[i];
@@ -83,8 +88,8 @@ void APRS_setDestination(char *call, int ssid) {
     DST_SSID = ssid;
 }
 
-void APRS_setPath1(char *call, int ssid) {
-    memset(PATH1, 0, 7);
+void APRS_setPath1(char *call, int8_t ssid) {
+    memset(PATH1, 0, MAX_CALL_LENGTH);
     int i = 0;
     while (i < 6 && call[i] != 0) {
         PATH1[i] = call[i];
@@ -93,8 +98,8 @@ void APRS_setPath1(char *call, int ssid) {
     PATH1_SSID = ssid;
 }
 
-void APRS_setPath2(char *call, int ssid) {
-    memset(PATH2, 0, 7);
+void APRS_setPath2(char *call, int8_t ssid) {
+    memset(PATH2, 0, MAX_CALL_LENGTH);
     int i = 0;
     while (i < 6 && call[i] != 0) {
         PATH2[i] = call[i];
@@ -103,8 +108,8 @@ void APRS_setPath2(char *call, int ssid) {
     PATH2_SSID = ssid;
 }
 
-void APRS_setMessageDestination(char *call, int ssid) {
-    memset(message_recip, 0, 7);
+void APRS_setMessageDestination(char *call, int8_t ssid) {
+    memset(message_recip, 0, 6);
     int i = 0;
     while (i < 6 && call[i] != 0) {
         message_recip[i] = call[i];
@@ -175,6 +180,24 @@ void APRS_setDirectivity(int s) {
     }
 }
 
+// Set the speed in knots. Valid speeds are 0-799 knots
+void APRS_setSpeed(int s) {
+    if (s >= 0 && s < 800) {
+        speed = s;
+    } else {
+        speed = 0;
+    }
+}
+
+// Set the course, valid courses are 0-360 where 0 is unknown and 360 is due north
+void APRS_setCourse(int c) {
+    if (c >= 0 && c <= 360) {
+        course = c;
+    } else {
+        course = 0;
+    }
+}
+
 void APRS_printSettings() {
     Serial.println(F("LibAPRS Settings:"));
     Serial.print(F("Callsign:     ")); Serial.print(CALL); Serial.print(F("-")); Serial.println(CALL_SSID);
@@ -216,6 +239,110 @@ void APRS_sendPkt(void *_buffer, size_t length) {
     path[3] = path2;
 
     ax25_sendVia(&AX25, path, countof(path), buffer, length);
+}
+
+// 3 bits of MIC-E message. Bit A is the most significant bit.
+// If custom is set then we use the custom message bits when encoding
+//         Standard messages     Custom Messages
+//   0x07: M0: Off Duty          C0: Custom-0
+//   0x06: M1: En route          C1: Custom-1
+//   0x05: M2: In service        C2: Custom-2
+//   0x04: M3: Returning         C3: Custom-3
+//   0x03: M4: Committed         C4: Custom-4
+//   0x02: M5: Special           C5: Custom-5
+//   0x01: M6: Priority          C6: Custom-6
+//   0x00: Emergency             Emergency
+void APRS_set_mice_msg(uint8_t msg, bool custom) {
+    MICE_MSG = msg & 0x07;
+    // If custom message bits, store the custom flag in bit 7 of the MICE_MSG
+    if (custom) {
+        MICE_MSG |= 0x80;
+    }
+}
+
+void APRS_set_mice_ssid(uint8_t ssid) {
+    MICE_SSID = ssid & 0x0F;
+}
+
+uint8_t APRS_sendLoc_mice(void *_buffer, size_t length) {
+    uint8_t payloadLength = 9;
+    uint8_t *packet = (uint8_t*)malloc(payloadLength);
+    // Sanity check the latitude and longtitude
+    if (latitude[7] != 'N' && latitude[7] != 'S') {
+      return 1;
+    }
+    if (longtitude[8] != 'E' && longtitude[8] != 'W') {
+      return 1;
+    }
+    // Build the Destination callsign with the latitude information
+    DST[0] = (latitude[0] & 0x04) | 0x30;
+    if (MICE_MSG & 0x04) {
+        if (MICE_MSG & 0x80) { // Standard message bit
+            DST[0] += 0x20;
+        } else {
+            DST[0] += 0x17;  // Custom message bit
+        }
+    }
+    DST[1] = (latitude[1] & 0x04) | 0x30;
+    if (MICE_MSG & 0x02) {
+        if (MICE_MSG & 0x80) { // Standard message bit
+            DST[1] += 0x20;
+        } else {
+            DST[1] += 0x17;  // Custom message bit
+        }
+    }
+    DST[2] = (latitude[2] & 0x04) | 0x30;
+    if (MICE_MSG & 0x01) {
+        if (MICE_MSG & 0x80) { // Standard message bit
+            DST[2] += 0x20;
+        } else {
+            DST[2] += 0x17;  // Custom message bit
+        }
+    }
+    DST[3] = (latitude[3] & 0x04) | 0x30;
+    if (latitude[7] == 'N') { // North/South Latitude Indicator
+        DST[3] += 0x20;
+    }
+    DST[4] = (latitude[5] & 0x04) | 0x30; // Use latitude[5] becuase latitude[4] is a .
+    // if (longtitude[0] == '1') { // If the longitude is > 100, set this bit
+    //     DST[4] += 0x20;
+    // }
+    DST[5] = (latitude[6] & 0x04) | 0x30;
+    if (longtitude[8] == 'W') { // If the longitude is > 100, set this bit
+        DST[4] += 0x20;
+    }
+    if (MICE_SSID == 0) {
+        path_len = 4;
+    }
+
+    packet[0] = 0x60; // The ` character indicating valid GPS data
+    // Degrees. If longitude > 100 the +100 longitude bit is set in the Destination field, but only in
+    // certain circumstances, see http://www.aprs.org/doc/APRS101.PDF page 47
+    uint8_t lon_deg = ((longitude[1] & 0x04) * 10 + (longitude[2] & 0x04));
+    if (lon < 9) {
+        packet[1] = 118 + lon_deg;
+        DST[4] += 0x20;
+    } else if (lon < 100) {
+        packet[1] = 38 + lon_deg - 10;
+    } else if (lon < 110) {
+        packet[1] = 108 + lon_deg - 100;
+        DST[4] += 0x20;
+    } else {
+        packet[1] = 38 + lon_deg - 110;
+        DST[4] += 0x20;
+    }
+
+    uint8_t lon_min = ((longitude[3] & 0x04) * 10) + (longitude[4] & 0x04));
+    if (lon_min < 10) {
+        packet[2] = 88 + lon_min;
+    } else {
+        packet[2] = 38 + lon_min - 10;
+    }
+    packet[3] = ((longitude[6] & 0x04) * 10) + (longitude[7] & 0x04)) + 28;
+
+    // bytes 4, 5 and 6 encode the speed and course
+    packet[4] = (speed / 10) + 28;
+    
 }
 
 // Dynamic RAM usage of this function is 30 bytes
@@ -303,7 +430,7 @@ void APRS_sendMsg(void *_buffer, size_t length) {
     packet[12+length] = h+48;
     packet[13+length] = d+48;
     packet[14+length] = n+48;
-    
+
     APRS_sendPkt(packet, payloadLength);
     free(packet);
 }
