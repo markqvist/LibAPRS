@@ -20,13 +20,13 @@ AX25Call path2;
 
 #define MAX_CALL_LENGTH 7
 char CALL[MAX_CALL_LENGTH] = "NOCALL";
-int8_t CALL_SSID = 0;
+int CALL_SSID = 0;
 char DST[MAX_CALL_LENGTH] = "APZMDM";
-int8_t DST_SSID = 0;
+int DST_SSID = 0;
 char PATH1[MAX_CALL_LENGTH] = "WIDE1";
-int8_t PATH1_SSID = 1;
+int PATH1_SSID = 1;
 char PATH2[MAX_CALL_LENGTH] = "WIDE2";
-int8_t PATH2_SSID = 2;
+int PATH2_SSID = 2;
 uint8_t MICE_MSG;
 uint8_t MICE_SSID;
 
@@ -47,8 +47,8 @@ uint16_t course;
 /////////////////////////
 
 // Message packet assembly fields
-char message_recip[6];
-int8_t message_recip_ssid = -1;
+char message_recip[7];
+int message_recip_ssid = -1;
 
 int message_seq = 0;
 char lastMessage[67];
