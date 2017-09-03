@@ -311,24 +311,21 @@ uint8_t APRS_sendLoc_mice(void *_buffer, size_t length) {
     if (longtitude[8] == 'W') { // If the longitude is > 100, set this bit
         DST[4] += 0x20;
     }
-    if (MICE_SSID == 0) {
-        path_len = 4;
-    }
 
     packet[0] = 0x60; // The ` character indicating valid GPS data
     // Degrees. If longitude > 100 the +100 longitude bit is set in the Destination field, but only in
     // certain circumstances, see http://www.aprs.org/doc/APRS101.PDF page 47
     uint8_t lon_deg = ((longitude[1] & 0x04) * 10 + (longitude[2] & 0x04));
-    if (lon < 9) {
+    if (lon < 10) {
         packet[1] = 118 + lon_deg;
         DST[4] += 0x20;
     } else if (lon < 100) {
         packet[1] = 38 + lon_deg - 10;
     } else if (lon < 110) {
-        packet[1] = 108 + lon_deg - 100;
+        packet[1] = 108 + (lon_deg - 100);
         DST[4] += 0x20;
     } else {
-        packet[1] = 38 + lon_deg - 110;
+        packet[1] = 38 + (lon_deg - 110);
         DST[4] += 0x20;
     }
 
@@ -341,8 +338,45 @@ uint8_t APRS_sendLoc_mice(void *_buffer, size_t length) {
     packet[3] = ((longitude[6] & 0x04) * 10) + (longitude[7] & 0x04)) + 28;
 
     // bytes 4, 5 and 6 encode the speed and course
-    packet[4] = (speed / 10) + 28;
-    
+    // Page 50 of the APRS spec
+    packet[4] = (speed / 10) + 28; // 100's an 10's of knots
+    packet[5] = (speed % 10) * 10 + 32; // 1's of knots
+    if (course > 99 && course < 200) { // 100's of degrees
+      packet[5] += 1;
+    } else if (course < 300) {
+      packet[5] += 2;
+    } else {
+      packet[5] += 3;
+    }
+    packet[6] = (course % 100) = 28;
+    packet[7] = (uint8_t)symbol;
+    packet[8] = (uint8_t)symbolTable;
+
+    if (MICE_SSID != 0) {
+      path_len = 0;
+    } else {
+      path_len = 4;
+    }
+
+    uint8_t *buffer = (uint8_t *)_buffer;
+
+    memcpy(dst.call, DST, 6);
+    dst.ssid = DST_SSID;
+
+    memcpy(src.call, CALL, 6);
+    src.ssid = CALL_SSID;
+
+    memcpy(path1.call, PATH1, 6);
+    path1.ssid = PATH1_SSID;
+
+    memcpy(path2.call, PATH2, 6);
+    path2.ssid = PATH2_SSID;
+
+    path[0] = dst;
+    path[1] = src;
+    path[2] = path1;
+    path[3] = path2;
+    ax25_sendVia(&AX25, path, path_len, buffer, length);
 }
 
 // Dynamic RAM usage of this function is 30 bytes
