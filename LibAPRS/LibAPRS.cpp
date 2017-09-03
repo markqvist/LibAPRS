@@ -18,7 +18,7 @@ AX25Call dst;
 AX25Call path1;
 AX25Call path2;
 
-#define MAX_CALL_LENGTH 6
+#define MAX_CALL_LENGTH 7
 char CALL[MAX_CALL_LENGTH] = "NOCALL";
 int8_t CALL_SSID = 0;
 char DST[MAX_CALL_LENGTH] = "APZMDM";
@@ -265,7 +265,8 @@ void APRS_set_mice_ssid(uint8_t ssid) {
 }
 
 uint8_t APRS_sendLoc_mice(void *_buffer, size_t length) {
-    uint8_t payloadLength = 9;
+    uint8_t path_len;
+    uint8_t payloadLength = 9 + length;
     uint8_t *packet = (uint8_t*)malloc(payloadLength);
     // Sanity check the latitude and longtitude
     if (latitude[7] != 'N' && latitude[7] != 'S') {
@@ -275,53 +276,53 @@ uint8_t APRS_sendLoc_mice(void *_buffer, size_t length) {
       return 1;
     }
     // Build the Destination callsign with the latitude information
-    DST[0] = (latitude[0] & 0x04) | 0x30;
+    DST[0] = (latitude[0] & 0x0F) | 0x30;
     if (MICE_MSG & 0x04) {
-        if (MICE_MSG & 0x80) { // Standard message bit
-            DST[0] += 0x20;
+        if (MICE_MSG & 0x80) {
+            DST[0] += 0x17; // Custom message bit
         } else {
-            DST[0] += 0x17;  // Custom message bit
+            DST[0] += 0x20; // Standard message bit
         }
     }
-    DST[1] = (latitude[1] & 0x04) | 0x30;
+    DST[1] = (latitude[1] & 0x0F) | 0x30;
     if (MICE_MSG & 0x02) {
-        if (MICE_MSG & 0x80) { // Standard message bit
-            DST[1] += 0x20;
+        if (MICE_MSG & 0x80) {
+            DST[1] += 0x17; // Custom message bit
         } else {
-            DST[1] += 0x17;  // Custom message bit
+            DST[1] += 0x20; // Standard message bit
         }
     }
-    DST[2] = (latitude[2] & 0x04) | 0x30;
+    DST[2] = (latitude[2] & 0x0F) | 0x30;
     if (MICE_MSG & 0x01) {
-        if (MICE_MSG & 0x80) { // Standard message bit
-            DST[2] += 0x20;
+        if (MICE_MSG & 0x80) {
+            DST[2] += 0x17; // Custom message bit
         } else {
-            DST[2] += 0x17;  // Custom message bit
+            DST[2] += 0x20; // Standard message bit
         }
     }
-    DST[3] = (latitude[3] & 0x04) | 0x30;
+    DST[3] = (latitude[3] & 0x0F) | 0x30;
     if (latitude[7] == 'N') { // North/South Latitude Indicator
         DST[3] += 0x20;
     }
-    DST[4] = (latitude[5] & 0x04) | 0x30; // Use latitude[5] becuase latitude[4] is a .
-    // if (longtitude[0] == '1') { // If the longitude is > 100, set this bit
+    DST[4] = (latitude[5] & 0x0F) | 0x30; // Use latitude[5] becuase latitude[4] is a .
+    // if (longtitude[0] == '1') { // If the longtitude is > 100, set this bit
     //     DST[4] += 0x20;
     // }
-    DST[5] = (latitude[6] & 0x04) | 0x30;
-    if (longtitude[8] == 'W') { // If the longitude is > 100, set this bit
+    DST[5] = (latitude[6] & 0x0F) | 0x30;
+    if (longtitude[8] == 'W') { // If the longtitude is > 100, set this bit
         DST[4] += 0x20;
     }
 
     packet[0] = 0x60; // The ` character indicating valid GPS data
-    // Degrees. If longitude > 100 the +100 longitude bit is set in the Destination field, but only in
+    // Degrees. If longtitude > 100 the +100 longtitude bit is set in the Destination field, but only in
     // certain circumstances, see http://www.aprs.org/doc/APRS101.PDF page 47
-    uint8_t lon_deg = ((longitude[1] & 0x04) * 10 + (longitude[2] & 0x04));
-    if (lon < 10) {
+    uint8_t lon_deg = ((longtitude[0] & 0x0F) * 100 + (longtitude[1] & 0x0F) * 10 + (longtitude[2] & 0x0F));
+    if (lon_deg < 10) {
         packet[1] = 118 + lon_deg;
         DST[4] += 0x20;
-    } else if (lon < 100) {
+    } else if (lon_deg < 100) {
         packet[1] = 38 + lon_deg - 10;
-    } else if (lon < 110) {
+    } else if (lon_deg < 110) {
         packet[1] = 108 + (lon_deg - 100);
         DST[4] += 0x20;
     } else {
@@ -329,26 +330,26 @@ uint8_t APRS_sendLoc_mice(void *_buffer, size_t length) {
         DST[4] += 0x20;
     }
 
-    uint8_t lon_min = ((longitude[3] & 0x04) * 10) + (longitude[4] & 0x04));
+    uint8_t lon_min = ((longtitude[3] & 0x0F) * 10) + (longtitude[4] & 0x0F);
     if (lon_min < 10) {
         packet[2] = 88 + lon_min;
     } else {
         packet[2] = 38 + lon_min - 10;
     }
-    packet[3] = ((longitude[6] & 0x04) * 10) + (longitude[7] & 0x04)) + 28;
+    packet[3] = ((longtitude[6] & 0x0F) * 10) + (longtitude[7] & 0x0F) + 28;
 
     // bytes 4, 5 and 6 encode the speed and course
     // Page 50 of the APRS spec
     packet[4] = (speed / 10) + 28; // 100's an 10's of knots
     packet[5] = (speed % 10) * 10 + 32; // 1's of knots
-    if (course > 99 && course < 200) { // 100's of degrees
-      packet[5] += 1;
-    } else if (course < 300) {
-      packet[5] += 2;
-    } else {
-      packet[5] += 3;
+    if (course > 299) {
+        packet[5] += 3;
+    } else if (course > 199) {
+        packet[5] += 2;
+    } else if (course > 99) {
+        packet[5] += 1;
     }
-    packet[6] = (course % 100) = 28;
+    packet[6] = (course % 100) + 28;
     packet[7] = (uint8_t)symbol;
     packet[8] = (uint8_t)symbolTable;
 
@@ -357,8 +358,6 @@ uint8_t APRS_sendLoc_mice(void *_buffer, size_t length) {
     } else {
       path_len = 4;
     }
-
-    uint8_t *buffer = (uint8_t *)_buffer;
 
     memcpy(dst.call, DST, 6);
     dst.ssid = DST_SSID;
@@ -376,7 +375,13 @@ uint8_t APRS_sendLoc_mice(void *_buffer, size_t length) {
     path[1] = src;
     path[2] = path1;
     path[3] = path2;
-    ax25_sendVia(&AX25, path, path_len, buffer, length);
+    if (length > 0) {
+        uint8_t *buffer = (uint8_t *)_buffer;
+        memcpy(&packet[9], buffer, length);
+    }
+    ax25_sendVia(&AX25, path, path_len, packet, payloadLength);
+    free(packet);
+    return 0;
 }
 
 // Dynamic RAM usage of this function is 30 bytes
