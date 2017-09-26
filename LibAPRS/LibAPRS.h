@@ -30,6 +30,7 @@ void APRS_setPreamble(unsigned long pre);
 void APRS_setTail(unsigned long tail);
 void APRS_useAlternateSymbolTable(bool use);
 void APRS_setSymbol(char sym);
+void APRS_setSymbolTable(char table);
 
 void APRS_setLat(char *lat);
 void APRS_setLon(char *lon);
@@ -39,6 +40,8 @@ void APRS_setGain(int s);
 void APRS_setDirectivity(int s);
 void APRS_setSpeed(int s);
 void APRS_setCourse(int c);
+void APRS_setDataRate300();
+void APRS_setDataRate1200();
 
 void APRS_sendPkt(void *_buffer, size_t length);
 void APRS_sendLoc(void *_buffer, size_t length);

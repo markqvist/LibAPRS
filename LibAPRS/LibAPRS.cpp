@@ -68,6 +68,14 @@ void APRS_poll(void) {
     ax25_poll(&AX25);
 }
 
+void APRS_setDataRate300() {
+    AFSK_setDataRate(&modem, 300);
+}
+
+void APRS_setDataRate1200() {
+    AFSK_setDataRate(&modem, 1200);
+}
+
 void APRS_setCallsign(char *call, int ssid) {
     memset(CALL, 0, MAX_CALL_LENGTH);
     int i = 0;
@@ -132,6 +140,10 @@ void APRS_useAlternateSymbolTable(bool use) {
     } else {
         symbolTable = '/';
     }
+}
+
+void APRS_setSymbolTable(char table) {
+    symbolTable = table;
 }
 
 void APRS_setSymbol(char sym) {
@@ -370,6 +382,11 @@ uint8_t APRS_sendLoc_mice(void *_buffer, size_t length) {
 
     memcpy(path2.call, PATH2, 6);
     path2.ssid = PATH2_SSID;
+
+    for (int i=0; i<6; i++) {
+        Serial.print((char)DST[i]);
+    }
+
 
     path[0] = dst;
     path[1] = src;
