@@ -20,6 +20,8 @@ void APRS_setPath2(char *call, int ssid);
 void APRS_setPreamble(unsigned long pre);
 void APRS_setTail(unsigned long tail);
 void APRS_useAlternateSymbolTable(bool use);
+void APRS_setDataTypeID(char flag);//va7ta update
+
 void APRS_setSymbol(char sym);
 
 void APRS_setLat(char *lat);

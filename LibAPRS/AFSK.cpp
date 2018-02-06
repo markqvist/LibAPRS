@@ -9,6 +9,7 @@ extern bool LibAPRS_open_squelch;
 
 bool hw_afsk_dac_isr = false;
 bool hw_5v_ref = false;
+bool fullBfrErr=false;//va7ta update
 Afsk *AFSK_modem;
 
 
@@ -25,36 +26,39 @@ void AFSK_hw_refDetect(void) {
     }
 }
 
-void AFSK_hw_init(void) {
-    // Set up ADC
+namespace AFSKADCINIT{//va7ta update
 
-    AFSK_hw_refDetect();
+	void AFSK_hw_init(void) {
+		// Set up ADC
 
-    TCCR1A = 0;                                    
-    TCCR1B = _BV(CS10) | _BV(WGM13) | _BV(WGM12);
-    ICR1 = (((CPU_FREQ+FREQUENCY_CORRECTION)) / 9600) - 1;
+		AFSK_hw_refDetect();
 
-    if (hw_5v_ref) {
-        ADMUX = _BV(REFS0) | 0;
-    } else {
-        ADMUX = 0;
-    }
+		TCCR1A = 0;                                    
+		TCCR1B = _BV(CS10) | _BV(WGM13) | _BV(WGM12);
+		ICR1 = (((CPU_FREQ+FREQUENCY_CORRECTION)) / 9600) - 1;
 
-    ADC_DDR  &= ~_BV(0);
-    ADC_PORT &= ~_BV(0);
-    DIDR0 |= _BV(0);
-    ADCSRB =    _BV(ADTS2) |
-                _BV(ADTS1) |
-                _BV(ADTS0);  
-    ADCSRA =    _BV(ADEN) |
-                _BV(ADSC) |
-                _BV(ADATE)|
-                _BV(ADIE) |
-                _BV(ADPS2);
+		if (hw_5v_ref) {
+			ADMUX = _BV(REFS0) | 0;
+		} else {
+			ADMUX = 0;
+		}
 
-    AFSK_DAC_INIT();
-    LED_TX_INIT();
-    LED_RX_INIT();
+		ADC_DDR  &= ~_BV(0);
+		ADC_PORT &= ~_BV(0);
+		DIDR0 |= _BV(0);
+		ADCSRB =    _BV(ADTS2) |
+					_BV(ADTS1) |
+					_BV(ADTS0);  
+		ADCSRA =    _BV(ADEN) |
+					_BV(ADSC) |
+					_BV(ADATE)|
+					_BV(ADIE) |
+					_BV(ADPS2);
+
+		AFSK_DAC_INIT();
+		LED_TX_INIT();
+		LED_RX_INIT();
+	}
 }
 
 void AFSK_init(Afsk *afsk) {
@@ -73,7 +77,7 @@ void AFSK_init(Afsk *afsk) {
         fifo_push(&afsk->delayFifo, 0);
     }
 
-    AFSK_hw_init();
+    AFSKADCINIT::AFSK_hw_init();//va7ta update
 
 }
 
@@ -211,6 +215,8 @@ static bool hdlcParse(Hdlc *hdlc, bool bit, FIFOBuffer *fifo) {
             ret = false;
             hdlc->receiving = false;
             LED_RX_OFF();
+			fullBfrErr=true;//va7ta update
+			
         }
 
         // Everytime we receive a HDLC_FLAG, we reset the
