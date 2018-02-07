@@ -33,6 +33,8 @@
 // from your main loop, like this:
 
 boolean gotPacket = false;
+extern boolean fullBfrErr;//used for flagging data errors
+extern boolean CRC_Err;//used for flagging data errors
 AX25Msg incomingPacket;
 uint8_t *packetData;
 
@@ -191,11 +193,11 @@ void loop() {
 
   delay(500);
   processPacket();
-  /*     // monitor packet data errors - Note: cannot be used with open squelch
-   *     if(CRC_Err==true){
+       // monitor packet data errors - Note: cannot be used with open squelch
+    if(CRC_Err==true){
           Serial.println(F("CRC_Error"));
           CRC_Err=false;
-    }*/
+    }
     // Flag any buffer overrun errors
     if(fullBfrErr==true){ 
           Serial.println(F("FullBufferError"));
