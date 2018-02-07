@@ -12,7 +12,7 @@
 //#define ADC_REFERENCE REF_5V
 
 // '!'(33) for no messaging; '='(61)if APRS messaging available
-#define APRS_DATA_TYPE_FLAG '=' // va7ta update
+#define APRS_DATA_TYPE_FLAG '=' 
 
 // Note some squelch delays are too short for catching APRS packets.
 // You can also define whether your modem will be
@@ -118,7 +118,7 @@ void locationUpdateExample() {
   APRS_setHeight(4);
   APRS_setGain(7);
   APRS_setDirectivity(0);
-  APRS_setDataTypeID(APRS_DATA_TYPE_FLAG);//flags if APRS messaging is available (va7ta update)
+  APRS_setDataTypeID(APRS_DATA_TYPE_FLAG);//flags if APRS messaging is available 
 
   
   // We'll define a comment string
@@ -175,7 +175,7 @@ void processPacket() {
 boolean whichExample = false;
 void loop() {
   
-  /*  va7ta update:
+  /*  
    *  insert this statement immediately after using the ADC for 
    *  other possible functions such as measuring a voltage from 
    *  a sensor. This is needed to re-configure the ADC for AFSK 

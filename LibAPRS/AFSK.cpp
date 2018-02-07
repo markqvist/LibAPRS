@@ -9,7 +9,7 @@ extern bool LibAPRS_open_squelch;
 
 bool hw_afsk_dac_isr = false;
 bool hw_5v_ref = false;
-bool fullBfrErr=false;//va7ta update
+bool fullBfrErr=false;
 Afsk *AFSK_modem;
 
 
@@ -26,7 +26,7 @@ void AFSK_hw_refDetect(void) {
     }
 }
 
-namespace AFSKADCINIT{//va7ta update
+namespace AFSKADCINIT{
 
 	void AFSK_hw_init(void) {
 		// Set up ADC
@@ -77,7 +77,7 @@ void AFSK_init(Afsk *afsk) {
         fifo_push(&afsk->delayFifo, 0);
     }
 
-    AFSKADCINIT::AFSK_hw_init();//va7ta update
+    AFSKADCINIT::AFSK_hw_init();
 
 }
 
@@ -215,7 +215,7 @@ static bool hdlcParse(Hdlc *hdlc, bool bit, FIFOBuffer *fifo) {
             ret = false;
             hdlc->receiving = false;
             LED_RX_OFF();
-			fullBfrErr=true;//va7ta update
+			fullBfrErr=true;
 			
         }
 

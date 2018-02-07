@@ -15,7 +15,7 @@
 
 extern int LibAPRS_vref;
 extern bool LibAPRS_open_squelch;
-bool CRC_Err=false; // CRC error flag - va7ta update
+bool CRC_Err=false;
 
 void ax25_init(AX25Ctx *ctx, ax25_callback_t hook) {
     memset(ctx, 0, sizeof(*ctx));
@@ -71,9 +71,9 @@ void ax25_poll(AX25Ctx *ctx) {
                         LED_RX_ON();
                     }
                     ax25_decode(ctx);
-                }else{//va7ta update
-					CRC_Err=true;//va7ta update
-				}//va7ta update
+                }else{
+                     CRC_Err=true;
+                }
             }
             ctx->sync = true;
             ctx->crc_in = CRC_CCIT_INIT_VAL;

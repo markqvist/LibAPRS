@@ -10,9 +10,9 @@
 #include "HDLC.h"
 
 #define SIN_LEN 512
-namespace AFSKADCINIT {//va7ta update
-	void AFSK_hw_init(void);//va7ta update
-};//va7ta update
+namespace AFSKADCINIT {
+	void AFSK_hw_init(void);
+};
 static const uint8_t sin_table[] PROGMEM =
 {
     128, 129, 131, 132, 134, 135, 137, 138, 140, 142, 143, 145, 146, 148, 149, 151,
