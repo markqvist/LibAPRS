@@ -11,6 +11,10 @@
 // OR
 //#define ADC_REFERENCE REF_5V
 
+// '!'(33) for no messaging; '='(61)if APRS messaging available
+#define APRS_DATA_TYPE_FLAG '=' // va7ta update
+
+// Note some squelch delays are too short for catching APRS packets.
 // You can also define whether your modem will be
 // running with an open squelch radio:
 #define OPEN_SQUELCH false
@@ -31,6 +35,9 @@
 boolean gotPacket = false;
 AX25Msg incomingPacket;
 uint8_t *packetData;
+
+using namespace AFSKADCINIT;//provides access for re-initializing ADC for AFSK decoding
+
 void aprs_msg_callback(struct AX25Msg *msg) {
   // If we already have a packet waiting to be
   // processed, we must drop the new one.
@@ -109,6 +116,8 @@ void locationUpdateExample() {
   APRS_setHeight(4);
   APRS_setGain(7);
   APRS_setDirectivity(0);
+  APRS_setDataTypeID(APRS_DATA_TYPE_FLAG);//flags if APRS messaging is available (va7ta update)
+
   
   // We'll define a comment string
   char *comment = "LibAPRS location update";
@@ -164,6 +173,14 @@ void processPacket() {
 boolean whichExample = false;
 void loop() {
   
+  /*  va7ta update:
+   *  insert this statement immediately after using the ADC for 
+   *  other possible functions such as measuring a voltage from 
+   *  a sensor. This is needed to re-configure the ADC for AFSK 
+   *  decoding.
+   */  
+   // AFSKADCINIT::AFSK_hw_init();// re-initialize AFSK operation
+
   delay(1000);
   if (whichExample) {
     locationUpdateExample();
@@ -174,4 +191,14 @@ void loop() {
 
   delay(500);
   processPacket();
+  /*     // monitor packet data errors - Note: cannot be used with open squelch
+   *     if(CRC_Err==true){
+          Serial.println(F("CRC_Error"));
+          CRC_Err=false;
+    }*/
+    // Flag any buffer overrun errors
+    if(fullBfrErr==true){ 
+          Serial.println(F("FullBufferError"));
+          fullBfrErr=false;
+    }
 }
