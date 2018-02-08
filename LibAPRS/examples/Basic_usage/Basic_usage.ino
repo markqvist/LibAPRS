@@ -175,7 +175,7 @@ void processPacket() {
 boolean whichExample = false;
 void loop() {
   
-  /*  
+  /*   
    *  insert this statement immediately after using the ADC for 
    *  other possible functions such as measuring a voltage from 
    *  a sensor. This is needed to re-configure the ADC for AFSK 

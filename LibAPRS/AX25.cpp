@@ -15,7 +15,7 @@
 
 extern int LibAPRS_vref;
 extern bool LibAPRS_open_squelch;
-bool CRC_Err=false;
+bool CRC_Err=false; 
 
 void ax25_init(AX25Ctx *ctx, ax25_callback_t hook) {
     memset(ctx, 0, sizeof(*ctx));

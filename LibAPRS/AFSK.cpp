@@ -215,7 +215,7 @@ static bool hdlcParse(Hdlc *hdlc, bool bit, FIFOBuffer *fifo) {
             ret = false;
             hdlc->receiving = false;
             LED_RX_OFF();
-			fullBfrErr=true;
+			fullBfrErr=true; 
 			
         }
 
