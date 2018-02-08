@@ -4,7 +4,7 @@
 
 Afsk modem;
 AX25Ctx AX25;
-extern void aprs_msg_callback(struct AX25Msg *msg);
+extern void aprs_msg_callback(struct AX25Msg *msg); 
 #define countof(a) sizeof(a)/sizeof(a[0])
 
 int LibAPRS_vref = REF_3V3;
@@ -12,6 +12,7 @@ bool LibAPRS_open_squelch = false;
 
 unsigned long custom_preamble = 350UL;
 unsigned long custom_tail = 50UL;
+char dataID_Flag; // '!' no messaging; '=' messaging va7ta update
 
 AX25Call src;
 AX25Call dst;
@@ -121,6 +122,10 @@ void APRS_setTail(unsigned long tail) {
     custom_tail = tail;
 }
 
+void APRS_setDataTypeID(uint8_t flag) {//va7ta update
+    dataID_Flag = flag;//va7ta update
+}//va7ta update
+
 void APRS_useAlternateSymbolTable(bool use) {
     if (use) {
         symbolTable = '\\';
@@ -228,7 +233,7 @@ void APRS_sendLoc(void *_buffer, size_t length) {
     }
     uint8_t *packet = (uint8_t*)malloc(payloadLength);
     uint8_t *ptr = packet;
-    packet[0] = '=';
+    packet[0] = dataID_Flag; //'!'or'='//va7ta update
     packet[9] = symbolTable;
     packet[19] = symbol;
     ptr++;
