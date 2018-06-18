@@ -21,7 +21,8 @@ See the example included in the library for info on how to use it!
 
 ## Installation
 
-Place the "LibAPRS" folder (the one in the same folder as this readme file) inside your Arduino "libraries" folder. That's all!
+1. Download the library: https://github.com/markqvist/LibAPRS/archive/master.zip
+1. (In the Arduino IDE) Sketch > Include Library > Add .ZIP Library... > select the downloaded file > Open
 
 ## Getting started
 
