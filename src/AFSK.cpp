@@ -30,9 +30,9 @@ void AFSK_hw_init(void) {
 
     AFSK_hw_refDetect();
 
-    TCCR1A = 0;                                    
+    TCCR1A = 0;
     TCCR1B = _BV(CS10) | _BV(WGM13) | _BV(WGM12);
-    ICR1 = (((CPU_FREQ+FREQUENCY_CORRECTION)) / 9600) - 1;
+    ICR1 = (((CPU_FREQ+FREQUENCY_CORRECTION)) / SAMPLERATE) - 1;
 
     if (hw_5v_ref) {
         ADMUX = _BV(REFS0) | 0;
@@ -45,7 +45,7 @@ void AFSK_hw_init(void) {
     DIDR0 |= _BV(0);
     ADCSRB =    _BV(ADTS2) |
                 _BV(ADTS1) |
-                _BV(ADTS0);  
+                _BV(ADTS0);
     ADCSRA =    _BV(ADEN) |
                 _BV(ADSC) |
                 _BV(ADATE)|
@@ -184,7 +184,7 @@ static bool hdlcParse(Hdlc *hdlc, bool bit, FIFOBuffer *fifo) {
     // the left by one bit, to make room for the
     // next incoming bit
     hdlc->demodulatedBits <<= 1;
-    // And then put the newest bit from the 
+    // And then put the newest bit from the
     // demodulator into the byte.
     hdlc->demodulatedBits |= bit ? 1 : 0;
 
@@ -205,9 +205,9 @@ static bool hdlcParse(Hdlc *hdlc, bool bit, FIFOBuffer *fifo) {
             }
         } else {
             // If the buffer is full, we have a problem
-            // and abort by setting the return value to     
+            // and abort by setting the return value to
             // false and stopping the here.
-            
+
             ret = false;
             hdlc->receiving = false;
             LED_RX_OFF();
@@ -255,7 +255,7 @@ static bool hdlcParse(Hdlc *hdlc, bool bit, FIFOBuffer *fifo) {
     // a control character. Therefore, if we detect such a
     // "stuffed bit", we simply ignore it and wait for the
     // next bit to come in.
-    // 
+    //
     // We do the detection by applying an AND bit-mask to the
     // stream of demodulated bits. This mask is 00111111 (0x3f)
     // if the result of the operation is 00111110 (0x3e), we
@@ -333,7 +333,7 @@ void AFSK_adc_isr(Afsk *afsk, int8_t currentSample) {
     afsk->iirX[1] = ((int8_t)fifo_pop(&afsk->delayFifo) * currentSample) >> 2;
 
     afsk->iirY[0] = afsk->iirY[1];
-    
+
     afsk->iirY[1] = afsk->iirX[0] + afsk->iirX[1] + (afsk->iirY[0] >> 1); // Chebyshev filter
 
 
@@ -347,7 +347,7 @@ void AFSK_adc_isr(Afsk *afsk, int8_t currentSample) {
     fifo_push(&afsk->delayFifo, currentSample);
 
     // We need to check whether there is a signal transition.
-    // If there is, we can recalibrate the phase of our 
+    // If there is, we can recalibrate the phase of our
     // sampler to stay in sync with the transmitter. A bit of
     // explanation is required to understand how this works.
     // Since we have PHASE_MAX/PHASE_BITS = 8 samples per bit,
@@ -363,13 +363,13 @@ void AFSK_adc_isr(Afsk *afsk, int8_t currentSample) {
     //   Past                                      Future
     //       0000000011111111000000001111111100000000
     //                   |________|
-    //                       ||     
+    //                       ||
     //                     Window
     //
     // Every time we detect a signal transition, we adjust
     // where this window is positioned little. How much we
     // adjust it is defined by PHASE_INC. If our current phase
-    // phase counter value is less than half of PHASE_MAX (ie, 
+    // phase counter value is less than half of PHASE_MAX (ie,
     // the window size) when a signal transition is detected,
     // add PHASE_INC to our phase counter, effectively moving
     // the window a little bit backward (to the left in the
@@ -462,7 +462,7 @@ ISR(ADC_vect) {
     TIFR1 = _BV(ICF1);
     AFSK_adc_isr(AFSK_modem, ((int16_t)((ADC) >> 2) - 128));
     if (hw_afsk_dac_isr) {
-        DAC_PORT = (AFSK_dac_isr(AFSK_modem) & 0xF0) | _BV(3); 
+        DAC_PORT = (AFSK_dac_isr(AFSK_modem) & 0xF0) | _BV(3);
     } else {
         DAC_PORT = 128;
     }
