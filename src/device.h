@@ -17,7 +17,7 @@
 #endif
 
 // Sampling & timer setup
-#define CONFIG_AFSK_DAC_SAMPLERATE 9600
+#define CONFIG_AFSK_DAC_SAMPLERATE 28800
 
 // Port settings
 #if TARGET_CPU == m328p
