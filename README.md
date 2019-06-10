@@ -5,10 +5,6 @@ I hope to add ESP32 support to this fork. At the moment, probably only this file
 
 LibAPRS is an Arduino IDE library that makes it easy to send and receive APRS packets with a [MicroModem](http://unsigned.io/micromodem)-compatible modem.
 
-You can buy a complete modem from [my shop](http://unsigned.io/shop), or you can build one yourself pretty easily. Take a look at the documentation in the [MicroModem](https://github.com/markqvist/MicroModem) repository for information and getting started guides!
-
-See the example included in the library for info on how to use it!
-
 ## Some features
 
 - Send and receive AX.25 APRS packets
@@ -20,15 +16,6 @@ See the example included in the library for info on how to use it!
 - Support for settings APRS symbols
 - Support for power/height/gain info in location updates
 - Can run with open squelch
-
-## Installation
-
-1. Download the library: https://github.com/markqvist/LibAPRS/archive/master.zip
-1. (In the Arduino IDE) Sketch > Include Library > Add .ZIP Library... > select the downloaded file > Open
-
-## Getting started
-
-You should read through the "Basic_usage" example included with the library. It contains an explanation of all the functions and a basic sketch to get you up and running with sending and receiving packets.
 
 ## Got bugs?
 
