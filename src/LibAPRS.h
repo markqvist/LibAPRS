@@ -28,6 +28,8 @@ void APRS_setPower(int s);
 void APRS_setHeight(int s);
 void APRS_setGain(int s);
 void APRS_setDirectivity(int s);
+void APRS_setCourse(int s);
+void APRS_setSpeed(int s);
 
 void APRS_sendPkt(void *_buffer, size_t length);
 void APRS_sendLoc(void *_buffer, size_t length);

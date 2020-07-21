@@ -34,6 +34,9 @@ char latitude[9];
 char longtitude[10];
 char symbolTable = '/';
 char symbol = 'n';
+char speed[4] = "000";
+char course[4] = "000";
+
 
 uint8_t power = 10;
 uint8_t height = 10;
@@ -175,6 +178,16 @@ void APRS_setDirectivity(int s) {
     }
 }
 
+void APRS_setCourse(int s){
+	int temp = s;
+    sprintf(course, "%03d", s);
+}
+
+void APRS_setSpeed(int s){
+	int temp = s;
+	sprintf(speed, "%03d", s);
+}
+
 void APRS_printSettings() {
     Serial.println(F("LibAPRS Settings:"));
     Serial.print(F("Callsign:     ")); Serial.print(CALL); Serial.print(F("-")); Serial.println(CALL_SSID);
@@ -222,10 +235,15 @@ void APRS_sendPkt(void *_buffer, size_t length) {
 void APRS_sendLoc(void *_buffer, size_t length) {
     size_t payloadLength = 20+length;
     bool usePHG = false;
+	bool useCS = false;
     if (power < 10 && height < 10 && gain < 10 && directivity < 9) {
         usePHG = true;
         payloadLength += 7;
     }
+	else if ( speed[2] != '0' ){   
+		useCS = true;
+		payloadLength += 7;
+	}	
     uint8_t *packet = (uint8_t*)malloc(payloadLength);
     uint8_t *ptr = packet;
     packet[0] = '=';
@@ -246,6 +264,13 @@ void APRS_sendLoc(void *_buffer, size_t length) {
         packet[26] = directivity+48;
         ptr+=7;
     }
+	if (useCS){
+		memcpy(ptr, course, 3);
+		packet[23] = '/';
+		ptr += 4;
+		memcpy(ptr, speed, 3);
+		ptr += 3;
+	}	
     if (length > 0) {
         uint8_t *buffer = (uint8_t *)_buffer;
         memcpy(ptr, buffer, length);
