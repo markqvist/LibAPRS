@@ -1,6 +1,6 @@
 ---
 name: "\U0001F41B Bug Report"
-about: Report a reproducible bug
+about: Report a reproducible bug. Do NOT use this for ideas, features or help requests.
 title: ''
 labels: ''
 assignees: ''
